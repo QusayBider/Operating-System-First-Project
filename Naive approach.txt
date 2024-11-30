@@ -1,0 +1,94 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+#include <time.h>
+
+#define MAX_WORD_LENGTH 50
+#define MAX_WORDS 2000000  // Set a max limit for the number of words to process
+
+int size = 0;  // To track number of unique words
+
+// Define a structure for storing word and its frequency
+struct Array {
+    char word[MAX_WORD_LENGTH];
+    int frequency;
+};
+
+// Array to store inserted words
+struct Array Insert_Array[MAX_WORDS];
+
+// Function to check if a word exists in the Insert_Array and update its frequency
+int checkIfExist(char *word) {
+    for (int i = 0; i < size; i++) {
+        if (strcmp(Insert_Array[i].word, word) == 0) {
+            Insert_Array[i].frequency++;  // Increment frequency if word exists
+            return 1;  // Word found
+        }
+    }
+    return 0;  // Word not found
+}
+
+// Function to load the data from the file
+void loadData(char *filename) {
+    FILE *in = fopen(filename, "r");
+    if (in == NULL) {
+        printf("Error! Can't open the file\n");
+        return;
+    }
+
+    char word[MAX_WORD_LENGTH];
+    while (fscanf(in, "%49s", word) == 1) {  // Read word by word
+
+        // If the word doesn't exist, add it to Insert_Array
+        if (!checkIfExist(word)) {
+            strncpy(Insert_Array[size].word, word, MAX_WORD_LENGTH - 1);
+            Insert_Array[size].word[MAX_WORD_LENGTH - 1] = '\0';  // Null-terminate the word
+            Insert_Array[size].frequency = 1;
+            size++;
+        }
+    }
+
+    fclose(in);
+    printf("Data loaded successfully\n");
+}
+
+// Function to get the top 10 most frequent words
+void getTop10() {
+    struct Array top10[10] = {{0}};  // Array to store the top 10 frequent words
+
+    // Traverse through all Insert_Array entries and find the top 10 frequent words
+    for (int i = 0; i < size; i++) {
+        // Insert the word into the top10 list if its frequency is high enough
+        for (int j = 0; j < 10; j++) {
+            if (top10[j].frequency == 0 || Insert_Array[i].frequency > top10[j].frequency) {
+                // Shift lower frequency words down
+                for (int k = 9; k > j; k--) {
+                    top10[k] = top10[k - 1];
+                }
+                top10[j] = Insert_Array[i];
+                break;
+            }
+        }
+    }
+
+    // Print the top 10 most frequent words
+    printf("Top 10 most frequent words:\n");
+    for (int i = 0; i < 10; i++) {
+        if (top10[i].frequency > 0) {
+            printf("%s: %d\n", top10[i].word, top10[i].frequency);
+        }
+    }
+}
+
+int main(void) {
+    clock_t start, end;
+
+    // Load data and measure time
+    loadData("text8.txt");  // Specify the path to your large file
+
+    // Get Top 10 most frequent words and measure time
+    getTop10();
+
+    return 0;
+}
